@@ -10,24 +10,6 @@ import java.util.List;
  */
 public class FragmentEnergyRectifier implements Rectifier {
 
-    // tell how many points fet for local fragment;
-    private int fragmentSize;
-    double multiplier;
-
-    public FragmentEnergyRectifier(int fragmentSize) {
-        this.fragmentSize = fragmentSize;
-        this.multiplier = 1d / (2 * fragmentSize + 1d);
-    }
-
-    public int getFragmentSize() {
-        return fragmentSize;
-    }
-
-    public void setFragmentSize(int fragmentSize) {
-        this.fragmentSize = fragmentSize;
-        this.multiplier = 1d / (2 * fragmentSize + 1d);
-    }
-
     @Override
     public double rectify(List<Point> survey) {
 
@@ -47,6 +29,7 @@ public class FragmentEnergyRectifier implements Rectifier {
             sum += point.getValue();
         }
 
+        double multiplier = 1d / (survey.size());
         return multiplier * sum;
     }
 }

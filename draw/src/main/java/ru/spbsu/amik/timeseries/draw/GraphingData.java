@@ -28,15 +28,21 @@ public class GraphingData {
                 555  // color
         );
 
-        EqualStepRectifier esr = new EqualStepRectifier();
+        EqualStepGlobalRectifier esr = new EqualStepGlobalRectifier();
         esr.setLocalRectifier(new FragmentLengthRectifier());
         esr.setLocalOverviewCount(2);
         esr.setLocalOverviewCount(5);
 
-        esr.setLocalRectifier(new FragmentEnergyRectifier(3));
+        esr.setLocalRectifier(new FragmentEnergyRectifier());
         esr.setLocalOverviewCount(3);
         Curve rectification = esr.rectify(curve);
         rectification.setTitle("Rectification");
+
+        EpsilonGlobalRectifier egr = new EpsilonGlobalRectifier();
+        egr.setLocalRectifier(new FragmentEnergyRectifier());
+        egr.setEpsilon(300); // 0.5 second
+        Curve epsilonRectification = egr.rectify(curve);
+        epsilonRectification.setTitle("epsilon rectification");
 
         DrasAnomalyDetector dad = new DrasAnomalyDetector();
         dad.setGlobalOverviewCount(15);
@@ -65,6 +71,7 @@ public class GraphingData {
         JPanel p = new JPanel();
         p.add(translateToJFree(curve));
         p.add(translateToJFree(rectification));
+        p.add(translateToJFree(epsilonRectification));
         p.add(translateToJFree(measure05Curve));
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
 

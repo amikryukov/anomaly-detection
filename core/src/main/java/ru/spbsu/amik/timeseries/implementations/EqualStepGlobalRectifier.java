@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * To rectify all curve to it rectification.
  */
-public class EqualStepRectifier implements GlobalRectifier {
+public class EqualStepGlobalRectifier implements GlobalRectifier {
 
     private Rectifier localRectifier;
 
@@ -32,7 +32,7 @@ public class EqualStepRectifier implements GlobalRectifier {
     @Override
     public Curve rectify(Curve curve) {
 
-        Curve result = new Curve(curve.getTitle(), curve.getColor());
+        Curve result = new Curve(curve.getTitle() + " [rectification]", curve.getColor());
         int count = curve.getPoints().size();
         if (count < 2 * localOverviewCount + 1) {
             throw new IllegalArgumentException("not enough points " + count + " for rectifying with " + this.toString());
@@ -54,7 +54,7 @@ public class EqualStepRectifier implements GlobalRectifier {
 
     @Override
     public String toString() {
-        return "EqualStepRectifier{" +
+        return "EqualStepGlobalRectifier{" +
                 "localRectifier=" + localRectifier +
                 ", localOverviewCount=" + localOverviewCount +
                 '}';

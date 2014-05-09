@@ -17,7 +17,7 @@ public class FragmentEnergyRectifierTest {
 
     @BeforeClass
     public void setUp() {
-        fragmentRectifier = new FragmentEnergyRectifier(3);
+        fragmentRectifier = new FragmentEnergyRectifier();
     }
 
     @Test
