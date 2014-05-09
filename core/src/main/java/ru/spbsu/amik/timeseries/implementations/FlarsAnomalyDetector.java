@@ -19,7 +19,10 @@ public class FlarsAnomalyDetector implements AnomalyDetector {
     private int globalOverviewCount = 100;
 
     // value in [0,1]. usually used values : 0.5, 0.75, 1
-    private double verticalExtremalLevel = 0.5;
+    private double verticalExtremalLevel = 0.75;
+
+    // value in [0,1], usually 0.4, 0.5, 0.75
+    private double verticalPotentialLevel = 0.5;
 
     // by default sigma extension used
     private ExtendedFuzzyComparison extendedFuzzyComparison = new SigmaExtendedFuzzyComparison(new StandardFuzzyComparison());
@@ -32,6 +35,10 @@ public class FlarsAnomalyDetector implements AnomalyDetector {
         this.globalOverviewCount = globalOverviewCount;
     }
 
+    public void setVerticalPotentialLevel(double verticalPotentialLevel) {
+        this.verticalPotentialLevel = verticalPotentialLevel;
+    }
+
     /**
      * Detect anomalies on rectification
      * @param rectification rectification of curve
@@ -41,22 +48,45 @@ public class FlarsAnomalyDetector implements AnomalyDetector {
     public List<Anomaly> detectAnomalies(Curve rectification) {
 
         List<Anomaly> result = new ArrayList<Anomaly>();
-        long startTime = -1;
-        long endTime = -1;
+        long startAnomalyTime = -1;
+        long endAnomalyTime = -1;
+        long startPotentialAnomaly = -1;
+        long endPotentialAnomaly = -1;
         for (Point point : createMeasuresCurve(rectification).getPoints()) {
             if (point.getValue() > verticalExtremalLevel) {
                 // anomaly
 
-                if (startTime == -1) {
-                    startTime = point.getTime();
+                if (startPotentialAnomaly != -1) {
+                    result.add(new Anomaly(startPotentialAnomaly, endPotentialAnomaly, Anomaly.AnomalyLevel.POTENTIAL));
+                    startPotentialAnomaly = -1;
                 }
-                endTime = point.getTime();
+                if (startAnomalyTime == -1) {
+                    startAnomalyTime = point.getTime();
+                }
+                endAnomalyTime = point.getTime();
+            } else if (point.getValue() > verticalPotentialLevel) {
+                // potential anomaly
+
+                if (startAnomalyTime != -1) {
+                    result.add(new Anomaly(startAnomalyTime, endAnomalyTime, Anomaly.AnomalyLevel.ANOMALY));
+                    startAnomalyTime = -1;
+                }
+
+                if (startPotentialAnomaly == -1) {
+                    startPotentialAnomaly = point.getTime();
+                }
+                endPotentialAnomaly = point.getTime();
+
             } else {
                 // not anomaly
 
-                if (startTime != -1) {
-                    result.add(new Anomaly(startTime, endTime, Anomaly.AnomalyLevel.ANOMALY));
-                    startTime = -1;
+                if (startAnomalyTime != -1) {
+                    result.add(new Anomaly(startAnomalyTime, endAnomalyTime, Anomaly.AnomalyLevel.ANOMALY));
+                    startAnomalyTime = -1;
+                }
+                if (startPotentialAnomaly != -1) {
+                    result.add(new Anomaly(startPotentialAnomaly, endPotentialAnomaly, Anomaly.AnomalyLevel.POTENTIAL));
+                    startPotentialAnomaly = -1;
                 }
             }
         }
