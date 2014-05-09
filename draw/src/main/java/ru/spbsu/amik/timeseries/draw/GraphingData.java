@@ -52,6 +52,14 @@ public class GraphingData {
             System.out.println(anomaly.toString());
         }
 
+        DrasTAnomalyDetector dtad = new DrasTAnomalyDetector();
+        dtad.setGlobalOverviewInterval(2000);
+        dtad.setHorizontalBackgroundLevel(0.9);
+        System.out.println("--------DRASt----------");
+        for (Anomaly anomaly : dtad.detectAnomalies(rectification)) {
+            System.out.println(anomaly.toString());
+        }
+
         FlarsAnomalyDetector fad = new FlarsAnomalyDetector();
         fad.setGlobalOverviewCount(70);
         fad.setVerticalExtremalLevel(0.5);
