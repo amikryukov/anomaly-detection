@@ -14,17 +14,11 @@ import java.util.List;
  */
 public class DrasAnomalyDetector implements AnomalyDetector {
 
-    private double verticalBackgroundLevel;
-
     /** should be much more then localOverviewCount */
     private int globalOverviewCount;
 
     /** in interval (0, 1] */
     private double horizontalBackgroundLevel;
-
-    public void setVerticalBackgroundLevel(double verticalBackgroundLevel) {
-        this.verticalBackgroundLevel = verticalBackgroundLevel;
-    }
 
     public void setGlobalOverviewCount(int globalOverviewCount) {
         this.globalOverviewCount = globalOverviewCount;
@@ -34,15 +28,27 @@ public class DrasAnomalyDetector implements AnomalyDetector {
         this.horizontalBackgroundLevel = horizontalBackgroundLevel;
     }
 
+    /**
+     * Detect anomalies on rectification
+     * @param rectification rectification of curve
+     * @return List of anomalies
+     */
     @Override
     public List<Anomaly> detectAnomalies(Curve rectification) {
 
-        return detectAnomalies(rectification, verticalBackgroundLevel);
+        double verticalLevel = calculateVerticalLevel(rectification);
+
+        return detectAnomalies(rectification, verticalLevel);
     }
 
-    public List<Anomaly> detectAnomaliesCalculatingVL(Curve rectification) {
+    /**
+     * Calculate vertical extremal level for rectification
+     * todo : currently this Class tied to one fuzzy comparison. Should be refactored in next version.
+     * @param rectification rectification of curve
+     * @return extremal vertical level
+     */
+    public double calculateVerticalLevel(Curve rectification) {
 
-        double verticalLevel = 0;
         // используя гравитационное расширение нечетких сравнений найдем центр тяжести всей совокупности.
         double sumOfRectifications = 0;
         for (Point point : rectification.getPoints()) {
@@ -50,15 +56,11 @@ public class DrasAnomalyDetector implements AnomalyDetector {
         }
         double mediana = sumOfRectifications / rectification.getPoints().size();
 
-        System.out.println("mediana : " + mediana);
         // сравнивая медиану с искомым вертикальным уровнем, должны получить, что уровень сильно больше ,
         // тоесть n ( mediana. verticalLevel) = 0.5
         // возьмем простое сравнение n(a, b) = (b - a) / (a^2 + b^2)^0.5
         // есть решение на бумажке
-        verticalLevel = mediana * (8 + Math.sqrt(28)) / 6;
-        System.out.println("vertical level : " + verticalLevel);
-
-        return detectAnomalies(rectification, verticalLevel);
+        return mediana * (8 + Math.sqrt(28)) / 6;
     }
 
 
@@ -171,11 +173,5 @@ public class DrasAnomalyDetector implements AnomalyDetector {
 
         return globalOverviewCount + 1 - Math.abs(point - currentPoint)
                       / (globalOverviewCount + 1);
-    }
-
-
-    /** additional class to find anomalies on potential anomalies set */
-    private class DifferenceAnomalyDetector {
-
     }
 }

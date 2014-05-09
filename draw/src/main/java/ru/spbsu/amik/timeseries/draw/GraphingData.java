@@ -7,10 +7,7 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import ru.spbsu.amik.timeseries.implementations.DrasAnomalyDetector;
-import ru.spbsu.amik.timeseries.implementations.EqualStepRectifier;
-import ru.spbsu.amik.timeseries.implementations.FragmentEnergyRectifier;
-import ru.spbsu.amik.timeseries.implementations.FragmentLengthRectifier;
+import ru.spbsu.amik.timeseries.implementations.*;
 import ru.spbsu.amik.timeseries.model.Anomaly;
 import ru.spbsu.amik.timeseries.model.Curve;
 import ru.spbsu.amik.timeseries.model.Point;
@@ -24,8 +21,8 @@ public class GraphingData {
 
 
         Curve curve = new TimeSeriesGenerator(99).generateRandomEqualStepSeries(
-                "Title",
-                1000, // count
+                "Data",
+                200, // count
                 100, // step
                 0,   // start time
                 555  // color
@@ -38,17 +35,25 @@ public class GraphingData {
 
         esr.setLocalRectifier(new FragmentEnergyRectifier(3));
         esr.setLocalOverviewCount(3);
-        Curve curve3 = esr.rectify(curve);
+        Curve rectification = esr.rectify(curve);
+        rectification.setTitle("Rectification");
 
         DrasAnomalyDetector dad = new DrasAnomalyDetector();
         dad.setGlobalOverviewCount(15);
         dad.setHorizontalBackgroundLevel(0.9);
-        dad.setVerticalBackgroundLevel(25d);
-        for (Anomaly anomaly : dad.detectAnomalies(curve3)) {
+        System.out.println("--------DRAS----------");
+        for (Anomaly anomaly : dad.detectAnomalies(rectification)) {
             System.out.println(anomaly.toString());
         }
-        System.out.println("------------------");
-        for (Anomaly anomaly : dad.detectAnomaliesCalculatingVL(curve3)) {
+
+        FlarsAnomalyDetector fad = new FlarsAnomalyDetector();
+        fad.setGlobalOverviewCount(70);
+        fad.setVerticalExtremalLevel(0.5);
+        Curve measure05Curve = fad.createMeasuresCurve(rectification);
+        measure05Curve.setTitle("Flars Measure");
+
+        System.out.println("--------FLARS----------");
+        for (Anomaly anomaly : fad.detectAnomalies(rectification)) {
             System.out.println(anomaly.toString());
         }
 
@@ -59,7 +64,8 @@ public class GraphingData {
 
         JPanel p = new JPanel();
         p.add(translateToJFree(curve));
-        p.add(translateToJFree(curve3));
+        p.add(translateToJFree(rectification));
+        p.add(translateToJFree(measure05Curve));
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
 
         JScrollPane ff = new JScrollPane(p);
