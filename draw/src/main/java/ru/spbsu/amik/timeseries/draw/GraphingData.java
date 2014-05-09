@@ -45,15 +45,15 @@ public class GraphingData {
         epsilonRectification.setTitle("epsilon rectification");
 
         DrasAnomalyDetector dad = new DrasAnomalyDetector();
-        dad.setGlobalOverviewCount(15);
+        dad.setGlobalOverview(15);
         dad.setHorizontalBackgroundLevel(0.9);
         System.out.println("--------DRAS----------");
-        for (Anomaly anomaly : dad.detectAnomalies(rectification)) {
+        for (Anomaly anomaly : dad.detectAnomalies(epsilonRectification)) {
             System.out.println(anomaly.toString());
         }
 
         DrasTAnomalyDetector dtad = new DrasTAnomalyDetector();
-        dtad.setGlobalOverviewInterval(2000);
+        dtad.setGlobalOverview(1500L);
         dtad.setHorizontalBackgroundLevel(0.9);
         System.out.println("--------DRASt----------");
         for (Anomaly anomaly : dtad.detectAnomalies(rectification)) {

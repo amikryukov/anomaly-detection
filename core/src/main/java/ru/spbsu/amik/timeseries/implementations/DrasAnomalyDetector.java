@@ -1,177 +1,34 @@
 package ru.spbsu.amik.timeseries.implementations;
 
-import ru.spbsu.amik.timeseries.api.AnomalyDetector;
-import ru.spbsu.amik.timeseries.model.Anomaly;
-import ru.spbsu.amik.timeseries.model.Curve;
 import ru.spbsu.amik.timeseries.model.Point;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-/**
- * Detector that implements DRAS algorithm of anomaly detection
- */
-public class DrasAnomalyDetector implements AnomalyDetector {
+public class DrasAnomalyDetector extends AbstractDrasAnomalyDetector<Integer> {
 
-    /** should be much more then localOverviewCount */
-    private int globalOverviewCount;
-
-    /** in interval (0, 1] */
-    private double horizontalBackgroundLevel;
-
-    public void setGlobalOverviewCount(int globalOverviewCount) {
-        this.globalOverviewCount = globalOverviewCount;
-    }
-
-    public void setHorizontalBackgroundLevel(double horizontalBackgroundLevel) {
-        this.horizontalBackgroundLevel = horizontalBackgroundLevel;
-    }
-
-    /**
-     * Detect anomalies on rectification
-     * @param rectification rectification of curve
-     * @return List of anomalies
-     */
     @Override
-    public List<Anomaly> detectAnomalies(Curve rectification) {
+    protected int startIndexLeftSideMeasure(int currentPoint, Integer globalOverview, List<Point> rectification) {
 
-        double verticalLevel = calculateVerticalLevel(rectification);
+        int delta = globalOverview;
+        if (currentPoint < delta)
+            delta = currentPoint;
 
-        return detectAnomalies(rectification, verticalLevel);
+        return currentPoint - delta;
     }
 
-    /**
-     * Calculate vertical extremal level for rectification
-     * todo : currently this Class tied to one fuzzy comparison. Should be refactored in next version.
-     * @param rectification rectification of curve
-     * @return extremal vertical level
-     */
-    public double calculateVerticalLevel(Curve rectification) {
+    @Override
+    protected int endIndexRightSideMeasure(int currentPoint, Integer globalOverview, List<Point> rectification) {
 
-        // используя гравитационное расширение нечетких сравнений найдем центр тяжести всей совокупности.
-        double sumOfRectifications = 0;
-        for (Point point : rectification.getPoints()) {
-            sumOfRectifications += point.getValue();
-        }
-        double mediana = sumOfRectifications / rectification.getPoints().size();
+        int delta = globalOverview;
+        if (rectification.size() - delta <= currentPoint)
+            delta = rectification.size() - currentPoint - 1;
 
-        // сравнивая медиану с искомым вертикальным уровнем, должны получить, что уровень сильно больше ,
-        // тоесть n ( mediana. verticalLevel) = 0.5
-        // возьмем простое сравнение n(a, b) = (b - a) / (a^2 + b^2)^0.5
-        // есть решение на бумажке
-        return mediana * (8 + Math.sqrt(28)) / 6;
+        return currentPoint + delta;
     }
 
-
-    private List<Anomaly> detectAnomalies(Curve rectification, double verticalBackgroundLevel) {
-
-        List<Anomaly> anomalies = new ArrayList<Anomaly>();
-        List<Point> points = rectification.getPoints();
-
-        Point startAnomaly = null;
-        Point endAnomaly = null;
-        // value - is difference of left and right measures
-        Curve potentialAnomalies = new Curve();
-        for (int i = 0 ; i < points.size(); i ++) {
-            double leftMeasure = leftSideMeasure(verticalBackgroundLevel, globalOverviewCount, i, points);
-            double rightMeasure = rightSideMeasure(verticalBackgroundLevel, globalOverviewCount, i, points);
-            double curDifference = leftMeasure - rightMeasure;
-
-            // potentially anomaly
-            if (Math.min(leftMeasure, rightMeasure) < horizontalBackgroundLevel) {
-                if (startAnomaly == null) {
-                    startAnomaly = points.get(i);
-                }
-                endAnomaly = points.get(i);
-                potentialAnomalies.addPoint(new Point(endAnomaly.getTime(), curDifference));
-            } else {
-                if (startAnomaly != null) {
-                    anomalies.add(new Anomaly(startAnomaly.getTime(), endAnomaly.getTime(), Anomaly.AnomalyLevel.POTENTIAL));
-                    anomalies.addAll(findAnomaliesInPotentialSet(potentialAnomalies));
-                    startAnomaly = null;
-                    potentialAnomalies.getPoints().clear();
-                }
-            }
-        }
-
-        return anomalies;
-    }
-
-    private Collection<? extends Anomaly> findAnomaliesInPotentialSet(Curve potentialAnomalies) {
-        List<Anomaly> resultList = new ArrayList<Anomaly>();
-        double difference = Double.MAX_VALUE;
-        long startTime = 0;
-        long endTime = 0;
-        List<Point> points = potentialAnomalies.getPoints();
-        int pointsCount = points.size();
-        for (int i = 0; i < pointsCount; i++) {
-            double currentDiff = points.get(i).getValue();
-
-            while (currentDiff < 0 && i < pointsCount - 1) {
-                if (currentDiff < difference) {
-                    difference = currentDiff;
-                    startTime = points.get(i).getTime();
-                }
-                currentDiff = points.get(++i).getValue();
-            }
-
-            while (currentDiff >= 0 && i < pointsCount - 1) {
-                if (currentDiff > difference) {
-                    difference = currentDiff;
-                    endTime = points.get(i).getTime();
-                }
-                currentDiff = points.get(++i).getValue();
-            }
-
-            if (startTime != 0 && endTime != 0) {
-                resultList.add(new Anomaly(startTime, endTime, Anomaly.AnomalyLevel.ANOMALY));
-                startTime = 0; endTime = 0;
-            }
-        }
-        return resultList;
-    }
-
-
-    /** Measures ratio of rectifications witch level more then alpha on left of current point */
-    private double leftSideMeasure(double alpha, int lyambda, int currentPoint, List<Point> rectification) {
-
-        if (currentPoint < lyambda)
-            lyambda = currentPoint;
-
-        return intervalMeasure(alpha, lyambda, currentPoint, rectification, currentPoint - lyambda, currentPoint);
-    }
-
-    /** Measures ratio of rectifications witch level more then alpha on right of current point */
-    private double rightSideMeasure(double alpha, int lyambda, int currentPoint, List<Point> rectification) {
-
-        // ?? some errors can occur here
-        if (rectification.size() - lyambda <= currentPoint)
-            lyambda = rectification.size() - currentPoint - 1;
-
-        return intervalMeasure(alpha, lyambda, currentPoint, rectification, currentPoint, currentPoint + lyambda);
-    }
-
-    /** Measures ratio of rectifications witch level more then alpha on interval */
-    private double intervalMeasure(double alpha, int lyambda, int currentPoint, List<Point> rectification, int start, int end) {
-
-        double numerator = 0;
-        double denominator = 0;
-        for (int i = start; i <= end; i++) {
-
-            double weight = weightFunction(lyambda, currentPoint, i);
-            if (rectification.get(i).getValue() <= alpha)
-                numerator += weight;
-            denominator += weight;
-        }
-
-        return denominator == 0 ? 0 : numerator / denominator;
-    }
-
-    /** used in one side measures */
-    private double weightFunction (int globalOverviewCount, int currentPoint, int point) {
-
-        return globalOverviewCount + 1 - Math.abs(point - currentPoint)
-                      / (globalOverviewCount + 1);
+    @Override
+    protected double weightFunction(Integer globalOverview, int currentPoint, int point, List<Point> rectification) {
+        return globalOverview + 1 - Math.abs(point - currentPoint)
+                / (globalOverview + 1);
     }
 }
