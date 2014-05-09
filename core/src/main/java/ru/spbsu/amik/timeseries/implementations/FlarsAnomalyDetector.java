@@ -1,22 +1,28 @@
 package ru.spbsu.amik.timeseries.implementations;
 
 import ru.spbsu.amik.timeseries.api.AnomalyDetector;
+import ru.spbsu.amik.timeseries.api.ExtendedFuzzyComparison;
 import ru.spbsu.amik.timeseries.model.Anomaly;
 import ru.spbsu.amik.timeseries.model.Curve;
 import ru.spbsu.amik.timeseries.model.Point;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Detector that implements FLARS algorithm of anomaly detection
  */
 public class FlarsAnomalyDetector implements AnomalyDetector {
 
-    private int globalOverviewCount;
+    private int globalOverviewCount = 100;
 
     // value in [0,1]. usually used values : 0.5, 0.75, 1
     private double verticalExtremalLevel = 0.5;
+
+    // by default sigma extension used
+    private ExtendedFuzzyComparison extendedFuzzyComparison = new SigmaExtendedFuzzyComparison(new StandardFuzzyComparison());
 
     public void setVerticalExtremalLevel(double verticalExtremalLevel) {
         this.verticalExtremalLevel = verticalExtremalLevel;
@@ -93,33 +99,18 @@ public class FlarsAnomalyDetector implements AnomalyDetector {
                 totalCount - 1 : centerPosition + globalOverviewCount;
 
         Point centerPoint = points.get(centerPosition);
-        double leftMoment = 0;
-        double rightMoment = 0;
-
-        // calculate left, right moments
+        // create weighted set
+        Map<Point, Double> weightedSet = new HashMap<Point, Double>();
         for (int i = a; i < b; i ++) {
             Point currentPoint = points.get(i);
-            if (currentPoint.getValue() < centerPoint.getValue()) {
-                leftMoment += (centerPoint.getValue() - currentPoint.getValue()) * calculateWeight(a, b, i, centerPosition);
-            } else if (currentPoint.getValue() > centerPoint.getValue()) {
-                rightMoment += (currentPoint.getValue() - centerPoint.getValue()) * calculateWeight(a, b, i, centerPosition);
-            }
+            weightedSet.put(currentPoint, calculateWeight(a, b, i, centerPosition));
         }
 
         // fuzzy comparison of moments
         // in this version let's uze n2(rM,lM) fuzzy comparison
-        return fuzzyComparison(rightMoment, leftMoment);
+        return extendedFuzzyComparison.compare(weightedSet, centerPoint.getValue());
     }
 
-
-    /**
-     *currently only n2(a,b) uses in this algorithm
-     * todo : make it configurable
-     * @return double value in [-1, 1]
-     */
-    private double fuzzyComparison(double a, double b) {
-        return (b - a) / Math.sqrt(a * a + b * b);
-    }
 
     /**
      * Calculates weight to ImF(k)

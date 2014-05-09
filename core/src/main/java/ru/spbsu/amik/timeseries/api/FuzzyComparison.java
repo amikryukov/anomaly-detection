@@ -2,9 +2,9 @@ package ru.spbsu.amik.timeseries.api;
 
 
 /**
- * Fuzzy comparison of numbers
+ * Fuzzy comparison of 2 numbers
  */
 public interface FuzzyComparison {
 
-    public double n(double a, double b);
+    public double compare(double a, double b);
 }
