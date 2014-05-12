@@ -1,13 +1,12 @@
 package ru.spbsu.amik.timeseries.implementations;
 
 import ru.spbsu.amik.timeseries.api.AnomalyDetector;
+import ru.spbsu.amik.timeseries.api.FuzzyLevelCalculator;
 import ru.spbsu.amik.timeseries.model.Anomaly;
 import ru.spbsu.amik.timeseries.model.Curve;
 import ru.spbsu.amik.timeseries.model.Point;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public abstract class AbstractDrasAnomalyDetector<T extends Number> implements AnomalyDetector {
 
@@ -15,7 +14,9 @@ public abstract class AbstractDrasAnomalyDetector<T extends Number> implements A
     protected T globalOverview;
 
     /** in interval (0, 1] */
-    protected double horizontalBackgroundLevel;
+    protected double horizontalBackgroundLevel = 1;
+
+    protected FuzzyLevelCalculator fuzzyLevelCalculator = new GravityN2FuzzyLevelCalculator();
 
     public void setHorizontalBackgroundLevel(double horizontalBackgroundLevel) {
         this.horizontalBackgroundLevel = horizontalBackgroundLevel;
@@ -23,6 +24,10 @@ public abstract class AbstractDrasAnomalyDetector<T extends Number> implements A
 
     public void setGlobalOverview(T globalOverview) {
         this.globalOverview = globalOverview;
+    }
+
+    public void setFuzzyLevelCalculator(FuzzyLevelCalculator fuzzyLevelCalculator) {
+        this.fuzzyLevelCalculator = fuzzyLevelCalculator;
     }
 
     /**
@@ -40,25 +45,37 @@ public abstract class AbstractDrasAnomalyDetector<T extends Number> implements A
 
     /**
      * Calculate vertical extremal level for rectification
-     * todo : currently this Class tied to one fuzzy comparison. Should be refactored in next version.
      * @param rectification rectification of curve
      * @return extremal vertical level
      */
-    protected double calculateVerticalLevel(Curve rectification) {
+    public double calculateVerticalLevel(Curve rectification) {
 
-        // используя гравитационное расширение нечетких сравнений найдем центр тяжести всей совокупности.
-        double sumOfRectifications = 0;
+        Map<Double, Double> tempMap = new HashMap<Double, Double>();
         for (Point point : rectification.getPoints()) {
-            sumOfRectifications += point.getValue();
+            if (!tempMap.containsKey(point.getValue())) {
+                tempMap.put(point.getValue(), 1D);
+            } else {
+                tempMap.put(point.getValue(), tempMap.get(point.getValue() + 1));
+            }
         }
-        double mediana = sumOfRectifications / rectification.getPoints().size();
 
-        // сравнивая медиану с искомым вертикальным уровнем, должны получить, что уровень сильно больше ,
-        // тоесть n ( mediana. verticalLevel) = 0.5
-        // возьмем простое сравнение n(a, b) = (b - a) / (a^2 + b^2)^0.5
-        // есть решение на бумажке
-        return mediana * (8 + Math.sqrt(28)) / 6;
+        return fuzzyLevelCalculator.calculate(tempMap, 0.5D);
     }
+
+    public double calculateGlobalOverview(Curve rectification) {
+
+        Map<Long, Double> tempMap = new HashMap<Long, Double>();
+        for (Point point : rectification.getPoints()) {
+            if (!tempMap.containsKey(point.getTime())) {
+                tempMap.put(point.getTime(), 1D);
+            } else {
+                tempMap.put(point.getTime(), tempMap.get(point.getTime() + 1));
+            }
+        }
+        // create point weighted set
+        return fuzzyLevelCalculator.calculate(tempMap, -0.5);
+    }
+
 
 
     private List<Anomaly> detectAnomalies(Curve rectification, double verticalBackgroundLevel) {
