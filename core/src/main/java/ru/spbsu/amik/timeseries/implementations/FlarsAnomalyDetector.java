@@ -39,6 +39,10 @@ public class FlarsAnomalyDetector implements AnomalyDetector {
         this.verticalPotentialLevel = verticalPotentialLevel;
     }
 
+    public void setExtendedFuzzyComparison(ExtendedFuzzyComparison extendedFuzzyComparison) {
+        this.extendedFuzzyComparison = extendedFuzzyComparison;
+    }
+
     /**
      * Detect anomalies on rectification
      * @param rectification rectification of curve

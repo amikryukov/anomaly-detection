@@ -44,7 +44,7 @@ public abstract class AbstractDrasAnomalyDetector<T extends Number> implements A
      * @param rectification rectification of curve
      * @return extremal vertical level
      */
-    public double calculateVerticalLevel(Curve rectification) {
+    protected double calculateVerticalLevel(Curve rectification) {
 
         // используя гравитационное расширение нечетких сравнений найдем центр тяжести всей совокупности.
         double sumOfRectifications = 0;
