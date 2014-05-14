@@ -19,8 +19,9 @@ public class GraphingData {
 
     public static void main(String[] args) {
 
+        TimeSeriesGenerator seriesGenerator = new TimeSeriesGenerator(0);
 
-        Curve curve = new TimeSeriesGenerator(99).generateRandomEqualStepSeries(
+        Curve curve = seriesGenerator.generateFallEqualStepSeries(
                 "Data",
                 200, // count
                 100, // step
@@ -29,23 +30,19 @@ public class GraphingData {
         );
 
         EqualStepGlobalRectifier esr = new EqualStepGlobalRectifier();
-        esr.setLocalRectifier(new FragmentLengthRectifier());
-        esr.setLocalOverviewCount(2);
-        esr.setLocalOverviewCount(5);
-
         esr.setLocalRectifier(new FragmentEnergyRectifier());
-        esr.setLocalOverviewCount(3);
+        esr.setLocalOverviewCount(20);
         Curve rectification = esr.rectify(curve);
         rectification.setTitle("Rectification");
 
         EpsilonGlobalRectifier egr = new EpsilonGlobalRectifier();
         egr.setLocalRectifier(new FragmentEnergyRectifier());
-        egr.setEpsilon(300); // 0.5 second
+        egr.setEpsilon(3000); // 3 second
         Curve epsilonRectification = egr.rectify(curve);
         epsilonRectification.setTitle("epsilon rectification");
 
         DrasAnomalyDetector dad = new DrasAnomalyDetector();
-        dad.setGlobalOverview(15);
+        dad.setGlobalOverview(50);
         dad.setHorizontalBackgroundLevel(0.9);
         System.out.println("--------DRAS----------");
         for (Anomaly anomaly : dad.detectAnomalies(epsilonRectification)) {
@@ -53,7 +50,7 @@ public class GraphingData {
         }
 
         DrasTAnomalyDetector dtad = new DrasTAnomalyDetector();
-        dtad.setGlobalOverview(1500L);
+        dtad.setGlobalOverview(10000l);
         dtad.setHorizontalBackgroundLevel(0.9);
         System.out.println("--------DRASt----------");
         for (Anomaly anomaly : dtad.detectAnomalies(rectification)) {
@@ -61,8 +58,8 @@ public class GraphingData {
         }
 
         FlarsAnomalyDetector fad = new FlarsAnomalyDetector();
-        fad.setGlobalOverviewCount(70);
-        fad.setVerticalExtremalLevel(0.5);
+        fad.setGlobalOverviewCount(200);
+        fad.setVerticalExtremalLevel(1);
         Curve measure05Curve = fad.createMeasuresCurve(rectification);
         measure05Curve.setTitle("Flars Measure");
 

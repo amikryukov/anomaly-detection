@@ -40,4 +40,31 @@ public class TimeSeriesGenerator {
         }
         return curve;
     }
+
+    public Curve generateFallEqualStepSeries(String title, int count, int step, int startTime, int color) {
+        Curve curve = new Curve(title, color);
+
+        int stab = 200;
+        for (int i = 0; i < count; ) {
+            double value = stab + random.nextDouble();
+            if (value < stab + 0.01) {
+                stab = stab / 2;
+            }
+            Point point = new Point(startTime + (i++) * step, value);
+            curve.addPoint(point);
+        }
+        return curve;
+    }
+
+    public Curve generateNoAnomalyEqualStepSeries(String title, int count, int step, int startTime, int color) {
+        Curve curve = new Curve(title, color);
+
+        int stab = 200;
+        for (int i = 0; i < count; ) {
+            double value = stab + random.nextDouble();
+            Point point = new Point(startTime + (i++) * step, value);
+            curve.addPoint(point);
+        }
+        return curve;
+    }
 }
