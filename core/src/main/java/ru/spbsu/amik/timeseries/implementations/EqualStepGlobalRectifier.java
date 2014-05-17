@@ -32,7 +32,7 @@ public class EqualStepGlobalRectifier implements GlobalRectifier {
     @Override
     public Curve rectify(Curve curve) {
 
-        Curve result = new Curve(curve.getTitle() + " [rectification]", curve.getColor());
+        Curve result = new Curve(curve.getTitle() + " [" + localRectifier.toString() + " with local overview " + localOverviewCount + "]", curve.getColor());
         int count = curve.getPoints().size();
         if (count < 2 * localOverviewCount + 1) {
             throw new IllegalArgumentException("not enough points " + count + " for rectifying with " + this.toString());

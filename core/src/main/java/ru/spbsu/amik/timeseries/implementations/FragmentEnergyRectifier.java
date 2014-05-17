@@ -32,4 +32,8 @@ public class FragmentEnergyRectifier implements Rectifier {
         double multiplier = 1d / (survey.size());
         return multiplier * sum;
     }
+
+    public String toString() {
+        return "Fragment Energy";
+    }
 }

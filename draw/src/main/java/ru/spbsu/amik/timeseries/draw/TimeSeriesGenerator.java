@@ -3,6 +3,11 @@ package ru.spbsu.amik.timeseries.draw;
 import ru.spbsu.amik.timeseries.model.Curve;
 import ru.spbsu.amik.timeseries.model.Point;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Random;
 
 public class TimeSeriesGenerator {
@@ -67,4 +72,57 @@ public class TimeSeriesGenerator {
         }
         return curve;
     }
+
+    public Curve generateGoodExampleEqualStepSeries(String title, int count, int step, int color,
+                                                    int noiseLevel,
+                                                    int extrmalNoiseLevel,
+                                                    int fallCount) {
+        Curve curve = new Curve(title, color);
+
+        double mainLevel = random.nextDouble() * 1000;
+        // start with zero
+        long time = 0;
+        // step
+        int i = 0;
+        double currentLevel = mainLevel;
+
+        // спокойный участок
+        for (;i < count / 4; i ++) {
+            curve.addPoint(new Point(time, currentLevel));
+            time += step;
+            currentLevel += (random.nextInt(100) > 50) ? noiseLevel * random.nextDouble() : 0 - noiseLevel * random.nextDouble();
+        }
+
+        // резкие колебания
+        for (;i < count / 3; i++) {
+            curve.addPoint(new Point(time, currentLevel));
+            time += step;
+            currentLevel += (random.nextInt(2) > 0) ? extrmalNoiseLevel * random.nextDouble() : 0 - extrmalNoiseLevel * random.nextDouble();
+        }
+
+        // спокойный участок
+        for (;i < count * 3 / 4; i ++) {
+            curve.addPoint(new Point(time, currentLevel));
+            time += step;
+            currentLevel += (random.nextInt(100) > 50) ? noiseLevel * random.nextDouble() : 0 - noiseLevel * random.nextDouble();
+        }
+
+        // резкое падение
+        double fallEndIn = currentLevel / 2;
+        for (int k = 0; k < fallCount && i < count; i ++, k++) {
+            curve.addPoint(new Point(time, currentLevel));
+            time += step;
+            currentLevel -= 40 - (10) * random.nextDouble();
+            if (currentLevel < fallEndIn) break;
+        }
+
+        for (; i < count; i ++) {
+            curve.addPoint(new Point(time, currentLevel));
+            time += step;
+            currentLevel += (random.nextInt(100) > 50) ? noiseLevel * random.nextDouble() : 0 - noiseLevel * random.nextDouble();
+        }
+        return curve;
+    }
+
+
 }

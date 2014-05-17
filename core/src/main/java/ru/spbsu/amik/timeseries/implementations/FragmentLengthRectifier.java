@@ -24,4 +24,8 @@ public class FragmentLengthRectifier implements Rectifier {
 
         return result;
     }
+
+    public String toString() {
+        return "Fragment Length";
+    }
 }
