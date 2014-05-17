@@ -112,11 +112,11 @@ public abstract class AbstractDrasAnomalyDetector<T extends Number> implements A
         return anomalies;
     }
 
-    private Collection<? extends Anomaly> findAnomaliesInPotentialSet(Curve potentialAnomalies) {
+    protected Collection<? extends Anomaly> findAnomaliesInPotentialSet(Curve potentialAnomalies) {
         List<Anomaly> resultList = new ArrayList<Anomaly>();
-        double difference = Double.MAX_VALUE;
-        long startTime = 0;
+        double difference = 0D;
         long endTime = 0;
+        long startTime = 0;
         List<Point> points = potentialAnomalies.getPoints();
         int pointsCount = points.size();
         for (int i = 0; i < pointsCount; i++) {
@@ -125,7 +125,7 @@ public abstract class AbstractDrasAnomalyDetector<T extends Number> implements A
             while (currentDiff < 0 && i < pointsCount - 1) {
                 if (currentDiff < difference) {
                     difference = currentDiff;
-                    startTime = points.get(i).getTime();
+                    endTime = points.get(i).getTime();
                 }
                 currentDiff = points.get(++i).getValue();
             }
@@ -133,14 +133,14 @@ public abstract class AbstractDrasAnomalyDetector<T extends Number> implements A
             while (currentDiff >= 0 && i < pointsCount - 1) {
                 if (currentDiff > difference) {
                     difference = currentDiff;
-                    endTime = points.get(i).getTime();
+                    startTime = points.get(i).getTime();
                 }
                 currentDiff = points.get(++i).getValue();
             }
 
-            if (startTime != 0 && endTime != 0) {
+            if (endTime != 0 && startTime != 0) {
                 resultList.add(new Anomaly(startTime, endTime, Anomaly.AnomalyLevel.ANOMALY));
-                startTime = 0; endTime = 0;
+                endTime = 0; startTime = 0;
             }
         }
         return resultList;

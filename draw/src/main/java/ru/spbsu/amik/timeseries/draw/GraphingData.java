@@ -69,8 +69,29 @@ public class GraphingData {
 //        eqsGlobalRectifier.setLocalOverviewCount(25);
 //        Curve equalStepL25Rectifier = eqsGlobalRectifier.rectify(curve);
 
+        // detect anomaly with DRAS global overview = 100 local overview = 5
+        DrasAnomalyDetector drasAnomalyDetector = new DrasAnomalyDetector();
+        drasAnomalyDetector.setHorizontalBackgroundLevel(1);
+        drasAnomalyDetector.setGlobalOverview(50);
+
+        FlarsAnomalyDetector flarsAnomalyDetector = new FlarsAnomalyDetector();
+        flarsAnomalyDetector.setVerticalExtremalLevel(0.75);
+        flarsAnomalyDetector.setVerticalPotentialLevel(0.2);
+
+        List<Anomaly> energyRectificationFlarsAnomalies = flarsAnomalyDetector.detectAnomalies(equalStepE5Rectifier);
+        List<Anomaly> lengthRectificationFlarsAnomalies = flarsAnomalyDetector.detectAnomalies(equalStepL5Rectifier);
 
 
+        List<Anomaly> energyRectificationDrasAnomalies = drasAnomalyDetector.detectAnomalies(equalStepE5Rectifier);
+        List<Anomaly> lengthRectificationDrasAnomalies = drasAnomalyDetector.detectAnomalies(equalStepL5Rectifier);
+
+//        for (Anomaly anomaly : lengthRectificationDrasAnomalies) {
+//            System.out.println(anomaly.getAnomalyLevel());
+//        }
+//
+        for (Anomaly anomaly : energyRectificationDrasAnomalies) {
+            System.out.println(anomaly.getAnomalyLevel() + "\t" + anomaly.getStart() + "\t" + anomaly.getEnd());
+        }
 
         JFrame f = new JFrame();
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -79,12 +100,22 @@ public class GraphingData {
         p.setLayout(new BoxLayout(p, BoxLayout.PAGE_AXIS));
 
         p.add(translateToJFree(curve, "Time, second", "Value"));
-        p.add(translateToJFree(equalStepE5Rectifier, "Time, second", "Value of rectification"));
+        //p.add(translateToJFree(equalStepE5Rectifier, "Time, second", "Value of rectification"), energyRectificationDrasAnomalies);
+        String curveTitle = curve.getTitle();
+        curve.setTitle(curveTitle + " [DRAS-energy]");
+        p.add(translateToJFree(curve, "Time, second", "Value", energyRectificationDrasAnomalies));
 //        p.add(translateToJFree(equalStepE15Rectifier, "Time, second", "Value of rectification"));
 //        p.add(translateToJFree(equalStepE25Rectifier, "Time, second", "Value of rectification"));
-        p.add(translateToJFree(equalStepL5Rectifier, "Time, second", "Value of rectification"));
+      //  p.add(translateToJFree(equalStepL5Rectifier, "Time, second", "Value of rectification"), lengthRectificationDrasAnomalies);
+        curve.setTitle(curveTitle + "[DRAS-length]");
+        p.add(translateToJFree(curve, "Time, second", "Value", lengthRectificationDrasAnomalies));
 //        p.add(translateToJFree(equalStepL15Rectifier, "Time, second", "Value of rectification"));
 //        p.add(translateToJFree(equalStepL25Rectifier, "Time, second", "Value of rectification"));
+        p.add(translateToJFree(flarsAnomalyDetector.createMeasuresCurve(curve), "",""));
+        curve.setTitle(curveTitle + "[FLARS-energy]");
+        p.add(translateToJFree(curve, "Time, second", "Value", energyRectificationFlarsAnomalies));
+        curve.setTitle(curveTitle + "[FLARS-length]");
+        p.add(translateToJFree(curve, "Time, second", "Value", lengthRectificationFlarsAnomalies));
         JScrollPane ff = new JScrollPane(p);
         f.add(ff);
 
@@ -197,18 +228,24 @@ public class GraphingData {
 
                 if (!anomalyList.isEmpty()) {
                     long x = plot.getDataset().getX(row, column).longValue();
+                    Color color = null;
+                    Anomaly.AnomalyLevel anomalyLevel = Anomaly.AnomalyLevel.NONE;
                     for (Anomaly anomaly : anomalyList) {
-                        if (x >= anomaly.getStart() && x <= anomaly.getEnd()) {
-                            switch (anomaly.getAnomalyLevel()) {
-                                case ANOMALY:
-                                    return new Color(255, 0, 0);
-                                case POTENTIAL:
-                                    return new Color(255, 255, 0);
-                                default:
-                                    return new Color(200, 200, 0);
 
+                        if (x >= anomaly.getStart() && x <= anomaly.getEnd()) {
+
+                            if (anomalyLevel.ordinal() < anomaly.getAnomalyLevel().ordinal()) {
+                                if (Anomaly.AnomalyLevel.ANOMALY == anomaly.getAnomalyLevel())
+                                        color = new Color(255, 0, 0);
+                                else
+                                        color = new Color(255, 255, 0);
+
+                                anomalyLevel = anomaly.getAnomalyLevel();
                             }
                         }
+                    }
+                    if (color != null) {
+                        return color;
                     }
                 }
                 return new Color(0, 0, 255);
@@ -247,7 +284,7 @@ public class GraphingData {
 
         BufferedImage image = chart.createBufferedImage(1100,300);
 
-       // saveToFile(image, "/home/amikryukov/Study/NAUCHNIC/materials/plots/", curve.getTitle().replaceAll("\\s", "_") + ".png");
+        saveToFile(image, "/home/amikryukov/Study/NAUCHNIC/materials/plots/", curve.getTitle().replaceAll("\\s", "_") + ".png");
 
         JLabel lblChart = new JLabel();
         lblChart.setIcon(new ImageIcon(image));

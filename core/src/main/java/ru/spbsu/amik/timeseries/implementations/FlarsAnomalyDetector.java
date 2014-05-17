@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public class FlarsAnomalyDetector implements AnomalyDetector {
 
-    private int globalOverviewCount = 100;
+    private int globalOverviewCount = -1;
 
     // value in [0,1]. usually used values : 0.5, 0.75, 1
     private double verticalExtremalLevel = 0.75;
@@ -106,6 +106,9 @@ public class FlarsAnomalyDetector implements AnomalyDetector {
      */
     public Curve createMeasuresCurve(Curve rectification) {
 
+        if (globalOverviewCount == -1) {
+            globalOverviewCount = rectification.getPoints().size();
+        }
         Curve result = new Curve("Flars Measure Curve");
         List<Point> points = rectification.getPoints();
         for (int i = 0; i < points.size(); i++) {
