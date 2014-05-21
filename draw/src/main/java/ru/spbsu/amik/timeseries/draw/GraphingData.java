@@ -5,6 +5,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.general.Series;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -33,14 +34,21 @@ public class GraphingData {
     private static void rectificationsExamples() {
         TimeSeriesGenerator seriesGenerator = new TimeSeriesGenerator(4);
 
-        Curve curve = seriesGenerator.generateGoodExampleEqualStepSeries(
-                "Incoming Data",
-                1000, // count
+//        Curve curve = seriesGenerator.generateGoodExampleEqualStepSeries(
+//                "Incoming Data",
+//                1000, // count
+//                100, // step
+//                555,  // color
+//                4,// noise level
+//                30, // extremal noise level
+//                20 // number of points when fall
+//        );
+        Curve curve = seriesGenerator.generateFallEqualStepSeries(
+                "Data",
+                1500, // count
                 100, // step
-                555,  // color
-                4,// noise level
-                30, // extremal noise level
-                20 // number of points when fall
+                0,   // start time
+                555  // color
         );
 
         // energy examples
@@ -63,6 +71,7 @@ public class GraphingData {
         Curve equalStepL5Rectifier = eqsGlobalRectifier.rectify(curve);
 
 
+
 //        eqsGlobalRectifier.setLocalOverviewCount(15);
 //        Curve equalStepL15Rectifier = eqsGlobalRectifier.rectify(curve);
 //
@@ -72,11 +81,15 @@ public class GraphingData {
         // detect anomaly with DRAS global overview = 100 local overview = 5
         DrasAnomalyDetector drasAnomalyDetector = new DrasAnomalyDetector();
         drasAnomalyDetector.setHorizontalBackgroundLevel(1);
-        drasAnomalyDetector.setGlobalOverview(50);
+        drasAnomalyDetector.setGlobalOverview(30);
+
 
         FlarsAnomalyDetector flarsAnomalyDetector = new FlarsAnomalyDetector();
-        flarsAnomalyDetector.setVerticalExtremalLevel(0.75);
-        flarsAnomalyDetector.setVerticalPotentialLevel(0.2);
+        flarsAnomalyDetector.setVerticalExtremalLevel(0.5);
+        flarsAnomalyDetector.setVerticalPotentialLevel(0.5);
+        flarsAnomalyDetector.setGlobalOverviewCount(300);
+        Curve flarsMeasureL = flarsAnomalyDetector.createMeasuresCurve(equalStepL5Rectifier);
+        Curve flarsMeasureE = flarsAnomalyDetector.createMeasuresCurve(equalStepE5Rectifier);
 
         List<Anomaly> energyRectificationFlarsAnomalies = flarsAnomalyDetector.detectAnomalies(equalStepE5Rectifier);
         List<Anomaly> lengthRectificationFlarsAnomalies = flarsAnomalyDetector.detectAnomalies(equalStepL5Rectifier);
@@ -84,6 +97,8 @@ public class GraphingData {
 
         List<Anomaly> energyRectificationDrasAnomalies = drasAnomalyDetector.detectAnomalies(equalStepE5Rectifier);
         List<Anomaly> lengthRectificationDrasAnomalies = drasAnomalyDetector.detectAnomalies(equalStepL5Rectifier);
+
+        double extremalLevel = drasAnomalyDetector.calculateVerticalLevel(equalStepL5Rectifier);
 
 //        for (Anomaly anomaly : lengthRectificationDrasAnomalies) {
 //            System.out.println(anomaly.getAnomalyLevel());
@@ -103,24 +118,30 @@ public class GraphingData {
         //p.add(translateToJFree(equalStepE5Rectifier, "Time, second", "Value of rectification"), energyRectificationDrasAnomalies);
         String curveTitle = curve.getTitle();
         curve.setTitle(curveTitle + " [DRAS-energy]");
-        p.add(translateToJFree(curve, "Time, second", "Value", energyRectificationDrasAnomalies));
+    //    p.add(translateToJFree(curve, "Time, second", "Value", energyRectificationDrasAnomalies));
 //        p.add(translateToJFree(equalStepE15Rectifier, "Time, second", "Value of rectification"));
 //        p.add(translateToJFree(equalStepE25Rectifier, "Time, second", "Value of rectification"));
-      //  p.add(translateToJFree(equalStepL5Rectifier, "Time, second", "Value of rectification"), lengthRectificationDrasAnomalies);
+
+        p.add(translateToJFree(equalStepL5Rectifier, "Time, second", "Value of rectification"));
+       // p.add(translateToJFree(equalStepL5Rectifier, "Time, second", "Value of rectification", extremalLevel), lengthRectificationDrasAnomalies);
+        p.add(translateToJFree(flarsMeasureL, "",""));
+        p.add(translateToJFree(equalStepE5Rectifier, "Time, second", "Value of rectification"));
+        p.add(translateToJFree(flarsMeasureE, "",""));
+
         curve.setTitle(curveTitle + "[DRAS-length]");
-        p.add(translateToJFree(curve, "Time, second", "Value", lengthRectificationDrasAnomalies));
-//        p.add(translateToJFree(equalStepL15Rectifier, "Time, second", "Value of rectification"));
+       // p.add(translateToJFree(curve, "Time, second", "Value", lengthRectificationDrasAnomalies));
+
 //        p.add(translateToJFree(equalStepL25Rectifier, "Time, second", "Value of rectification"));
-        p.add(translateToJFree(flarsAnomalyDetector.createMeasuresCurve(curve), "",""));
+     //   p.add(translateToJFree(flarsAnomalyDetector.createMeasuresCurve(curve), "",""));
         curve.setTitle(curveTitle + "[FLARS-energy]");
-        p.add(translateToJFree(curve, "Time, second", "Value", energyRectificationFlarsAnomalies));
+     //   p.add(translateToJFree(curve, "Time, second", "Value", energyRectificationFlarsAnomalies));
         curve.setTitle(curveTitle + "[FLARS-length]");
-        p.add(translateToJFree(curve, "Time, second", "Value", lengthRectificationFlarsAnomalies));
+     //   p.add(translateToJFree(curve, "Time, second", "Value", lengthRectificationFlarsAnomalies));
         JScrollPane ff = new JScrollPane(p);
         f.add(ff);
 
-        f.setSize(1100, 650);
-        f.setLocation(200,200);
+        f.setSize(1100, 750);
+        f.setLocation(200, 50);
         f.setVisible(true);
     }
 
@@ -194,8 +215,129 @@ public class GraphingData {
         f.setVisible(true);
     }
 
-    private static JLabel translateToJFree(Curve curve, String xAxisLabel, String yAxisLabel) {
+    public static JLabel translateToJFree(Curve curve, String xAxisLabel, String yAxisLabel) {
         return translateToJFree(curve, xAxisLabel, yAxisLabel, Collections.EMPTY_LIST);
+    }
+
+    private static JLabel translateToJFree(Curve curve, String xAxisLabel, String yAxisLabel, double extremalLevel) {
+        return translateToJFree(curve, xAxisLabel, yAxisLabel, Collections.EMPTY_LIST, extremalLevel);
+    }
+
+    private static JLabel translateToJFree(Curve curve, String xAxisLabel, String yAxisLabel,
+                                           final List<Anomaly> anomalyList, double extremalLevel) {
+
+        XYSeries series = new XYSeries(curve.getTitle());
+        for (Point point : curve.getPoints()) {
+            series.add(point.getTime(), point.getValue());
+        }
+
+        XYDataset xyDataset = new XYSeriesCollection(series);
+
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                curve.getTitle(),
+                xAxisLabel,
+                yAxisLabel,
+                xyDataset,
+                PlotOrientation.VERTICAL,
+                true,
+                true,
+                true
+        );
+
+
+        final XYPlot plot = chart.getXYPlot();
+
+        plot.setRenderer(0, new XYLineAndShapeRenderer(){
+
+            @Override
+            public Paint getItemPaint(int row, int column) {
+
+                if (!anomalyList.isEmpty()) {
+                    long x = plot.getDataset().getX(row, column).longValue();
+                    Color color = null;
+                    Anomaly.AnomalyLevel anomalyLevel = Anomaly.AnomalyLevel.NONE;
+                    for (Anomaly anomaly : anomalyList) {
+
+                        if (x >= anomaly.getStart() && x <= anomaly.getEnd()) {
+
+                            if (anomalyLevel.ordinal() < anomaly.getAnomalyLevel().ordinal()) {
+                                if (Anomaly.AnomalyLevel.ANOMALY == anomaly.getAnomalyLevel()) {
+                                    // color = new Color(255, 0, 0);
+                                } else {
+                                    color = new Color(255, 255, 0);
+                                }
+
+                                anomalyLevel = anomaly.getAnomalyLevel();
+                            }
+                        }
+                    }
+                    if (color != null) {
+                        return color;
+                    }
+                }
+                return new Color(0, 0, 255);
+            }
+
+            @Override
+            public Shape getItemShape(int row, int column) {
+                return ShapeUtilities.createDiamond(0);
+            }
+        });
+
+        double minimum = plot.getDomainAxis().getLowerBound();
+        double maximum = plot.getDomainAxis().getUpperBound();
+        XYSeries series2 = new XYSeries("vertical level");
+        series2.add(minimum, extremalLevel);
+        series2.add(maximum, extremalLevel);
+        XYDataset dataset2 = new XYSeriesCollection(series2);
+        plot.setDataset(1, dataset2);
+        plot.setRenderer(1, new XYLineAndShapeRenderer(){
+
+            @Override
+            public Paint getItemPaint(int row, int column) {
+
+                return new Color(255, 255, 0);
+            }
+
+            @Override
+            public Shape getItemShape(int row, int column) {
+                return ShapeUtilities.createDiamond(0);
+            }
+        });
+
+//        XYSeries series2 = new XYSeries(curve.getTitle());
+//        for (Point point : curve.getPoints()) {
+//            series2.add(point.getTime(), point.getValue() + 100);
+//        }
+//
+//        XYDataset xyDataset2 = new XYSeriesCollection(series2);
+//        plot.setDataset(1, xyDataset2);
+//
+//        int widthOfLine = 32;
+//        DefaultXYItemRenderer renderer1 = new DefaultXYItemRenderer();
+//        DefaultXYItemRenderer renderer2 = new DefaultXYItemRenderer();
+//        renderer1.setBaseShapesVisible(false);
+//        renderer2.setBaseShapesVisible(false);
+//        renderer1.setBaseStroke(new BasicStroke(widthOfLine));
+//        renderer2.setBaseStroke(new BasicStroke(widthOfLine));
+//        plot.setRenderer(0, renderer1);
+//        plot.setRenderer(1, renderer2);
+//
+//        plot.getRenderer().setSeriesPaint(1, new ChartColor(20, 0, 0));
+//
+//        // in blue
+//        plot.getRenderer().setSeriesPaint(0, new ChartColor(0, 0, 25));
+
+      //  plot.getRangeAxis().setLowerBound(0);
+
+        BufferedImage image = chart.createBufferedImage(1100,300);
+
+       // saveToFile(image, "/home/amikryukov/Study/NAUCHNIC/materials/plots/", curve.getTitle().replaceAll("\\s", "_") + ".png");
+
+        JLabel lblChart = new JLabel();
+        lblChart.setIcon(new ImageIcon(image));
+
+        return lblChart;
     }
 
     private static JLabel translateToJFree(Curve curve, String xAxisLabel, String yAxisLabel, final List<Anomaly> anomalyList) {
@@ -235,10 +377,11 @@ public class GraphingData {
                         if (x >= anomaly.getStart() && x <= anomaly.getEnd()) {
 
                             if (anomalyLevel.ordinal() < anomaly.getAnomalyLevel().ordinal()) {
-                                if (Anomaly.AnomalyLevel.ANOMALY == anomaly.getAnomalyLevel())
-                                        color = new Color(255, 0, 0);
-                                else
-                                        color = new Color(255, 255, 0);
+                                if (Anomaly.AnomalyLevel.ANOMALY == anomaly.getAnomalyLevel()) {
+                                   // color = new Color(255, 0, 0);
+                                } else {
+                                    color = new Color(255, 255, 0);
+                                }
 
                                 anomalyLevel = anomaly.getAnomalyLevel();
                             }
@@ -280,11 +423,11 @@ public class GraphingData {
 //        // in blue
 //        plot.getRenderer().setSeriesPaint(0, new ChartColor(0, 0, 25));
 
-        plot.getRangeAxis().setLowerBound(0);
+      //  plot.getRangeAxis().setLowerBound(0);
 
-        BufferedImage image = chart.createBufferedImage(1100,300);
+        BufferedImage image = chart.createBufferedImage(1100,200);
 
-        saveToFile(image, "/home/amikryukov/Study/NAUCHNIC/materials/plots/", curve.getTitle().replaceAll("\\s", "_") + ".png");
+     //   saveToFile(image, "/home/amikryukov/Study/NAUCHNIC/materials/plots/", curve.getTitle().replaceAll("\\s", "_") + ".png");
 
         JLabel lblChart = new JLabel();
         lblChart.setIcon(new ImageIcon(image));

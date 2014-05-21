@@ -10,6 +10,13 @@ public class StandardFuzzyComparison implements FuzzyComparison {
     // by default v = 2;
     private double v = 2;
 
+    public StandardFuzzyComparison() {
+    }
+
+    public StandardFuzzyComparison(double v) {
+        this.v = v;
+    }
+
     public void setV(double v) {
         this.v = v;
     }

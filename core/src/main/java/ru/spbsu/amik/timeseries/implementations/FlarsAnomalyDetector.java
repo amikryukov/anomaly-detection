@@ -25,7 +25,7 @@ public class FlarsAnomalyDetector implements AnomalyDetector {
     private double verticalPotentialLevel = 0.5;
 
     // by default sigma extension used
-    private ExtendedFuzzyComparison extendedFuzzyComparison = new SigmaExtendedFuzzyComparison(new StandardFuzzyComparison());
+    private ExtendedFuzzyComparison extendedFuzzyComparison = new GrabityExtendedFuzzyComparison(new StandardFuzzyComparison(2));
 
     public void setVerticalExtremalLevel(double verticalExtremalLevel) {
         this.verticalExtremalLevel = verticalExtremalLevel;
