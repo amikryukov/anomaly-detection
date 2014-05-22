@@ -34,22 +34,16 @@ public class GraphingData {
     private static void rectificationsExamples() {
         TimeSeriesGenerator seriesGenerator = new TimeSeriesGenerator(4);
 
-//        Curve curve = seriesGenerator.generateGoodExampleEqualStepSeries(
-//                "Incoming Data",
-//                1000, // count
-//                100, // step
-//                555,  // color
-//                4,// noise level
-//                30, // extremal noise level
-//                20 // number of points when fall
-//        );
-        Curve curve = seriesGenerator.generateFallEqualStepSeries(
-                "Data",
-                1500, // count
+        Curve curve = seriesGenerator.generateGoodExampleEqualStepSeries(
+                "Incoming Data",
+                1000, // count
                 100, // step
-                0,   // start time
-                555  // color
+                555,  // color
+                4,// noise level
+                30, // extremal noise level
+                20 // number of points when fall
         );
+
 
         // energy examples
         EqualStepGlobalRectifier eqsGlobalRectifier = new EqualStepGlobalRectifier();
@@ -100,12 +94,12 @@ public class GraphingData {
 
         double extremalLevel = drasAnomalyDetector.calculateVerticalLevel(equalStepL5Rectifier);
 
-//        for (Anomaly anomaly : lengthRectificationDrasAnomalies) {
-//            System.out.println(anomaly.getAnomalyLevel());
-//        }
-//
-        for (Anomaly anomaly : energyRectificationDrasAnomalies) {
-            System.out.println(anomaly.getAnomalyLevel() + "\t" + anomaly.getStart() + "\t" + anomaly.getEnd());
+        for (Anomaly anomaly : energyRectificationFlarsAnomalies) {
+            System.out.println(anomaly.toString());
+        }
+
+        for (Anomaly anomaly : lengthRectificationFlarsAnomalies) {
+            System.out.println(anomaly.toString());
         }
 
         JFrame f = new JFrame();
@@ -121,11 +115,14 @@ public class GraphingData {
     //    p.add(translateToJFree(curve, "Time, second", "Value", energyRectificationDrasAnomalies));
 //        p.add(translateToJFree(equalStepE15Rectifier, "Time, second", "Value of rectification"));
 //        p.add(translateToJFree(equalStepE25Rectifier, "Time, second", "Value of rectification"));
+        curve.setTitle(curveTitle + "[FLARS-length]");
 
-        p.add(translateToJFree(equalStepL5Rectifier, "Time, second", "Value of rectification"));
-       // p.add(translateToJFree(equalStepL5Rectifier, "Time, second", "Value of rectification", extremalLevel), lengthRectificationDrasAnomalies);
         p.add(translateToJFree(flarsMeasureL, "",""));
-        p.add(translateToJFree(equalStepE5Rectifier, "Time, second", "Value of rectification"));
+        p.add(translateToJFree(curve, "Time, second", "Value", lengthRectificationFlarsAnomalies));
+
+       // p.add(translateToJFree(equalStepL5Rectifier, "Time, second", "Value of rectification", extremalLevel), lengthRectificationDrasAnomalies);
+
+
         p.add(translateToJFree(flarsMeasureE, "",""));
 
         curve.setTitle(curveTitle + "[DRAS-length]");
@@ -134,9 +131,8 @@ public class GraphingData {
 //        p.add(translateToJFree(equalStepL25Rectifier, "Time, second", "Value of rectification"));
      //   p.add(translateToJFree(flarsAnomalyDetector.createMeasuresCurve(curve), "",""));
         curve.setTitle(curveTitle + "[FLARS-energy]");
-     //   p.add(translateToJFree(curve, "Time, second", "Value", energyRectificationFlarsAnomalies));
-        curve.setTitle(curveTitle + "[FLARS-length]");
-     //   p.add(translateToJFree(curve, "Time, second", "Value", lengthRectificationFlarsAnomalies));
+       p.add(translateToJFree(curve, "Time, second", "Value", energyRectificationFlarsAnomalies));
+
         JScrollPane ff = new JScrollPane(p);
         f.add(ff);
 
@@ -378,7 +374,7 @@ public class GraphingData {
 
                             if (anomalyLevel.ordinal() < anomaly.getAnomalyLevel().ordinal()) {
                                 if (Anomaly.AnomalyLevel.ANOMALY == anomaly.getAnomalyLevel()) {
-                                   // color = new Color(255, 0, 0);
+                                    color = new Color(255, 0, 0);
                                 } else {
                                     color = new Color(255, 255, 0);
                                 }
