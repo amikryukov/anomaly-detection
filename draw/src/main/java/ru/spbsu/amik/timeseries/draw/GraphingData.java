@@ -5,7 +5,6 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.jfree.data.general.Series;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -85,6 +84,17 @@ public class GraphingData {
         Curve flarsMeasureL = flarsAnomalyDetector.createMeasuresCurve(equalStepL5Rectifier);
         Curve flarsMeasureE = flarsAnomalyDetector.createMeasuresCurve(equalStepE5Rectifier);
 
+
+        FlarsRTAnomalyDetector FRT = new FlarsRTAnomalyDetector();
+        FRT.setVerticalExtremalLevel(0.5);
+        FRT.setGlobalOverviewInterval(30000);
+        for (Point p : equalStepL5Rectifier.getPoints()) {
+            FRT.checkPoint(p);
+        }
+
+        Curve FRTmeasure = FRT.getMeasureCurve();
+        List<Anomaly> FRTanomalies = FRT.getAnomalyList();
+
         List<Anomaly> energyRectificationFlarsAnomalies = flarsAnomalyDetector.detectAnomalies(equalStepE5Rectifier);
         List<Anomaly> lengthRectificationFlarsAnomalies = flarsAnomalyDetector.detectAnomalies(equalStepL5Rectifier);
 
@@ -117,13 +127,15 @@ public class GraphingData {
 //        p.add(translateToJFree(equalStepE25Rectifier, "Time, second", "Value of rectification"));
         curve.setTitle(curveTitle + "[FLARS-length]");
 
-        p.add(translateToJFree(flarsMeasureL, "",""));
-        p.add(translateToJFree(curve, "Time, second", "Value", lengthRectificationFlarsAnomalies));
+        p.add(translateToJFree(equalStepL5Rectifier, "",""));
+        p.add(translateToJFree(FRTmeasure, "", ""));
+
+        p.add(translateToJFree(curve, "Time, second", "Value", FRTanomalies));
 
        // p.add(translateToJFree(equalStepL5Rectifier, "Time, second", "Value of rectification", extremalLevel), lengthRectificationDrasAnomalies);
 
 
-        p.add(translateToJFree(flarsMeasureE, "",""));
+       // p.add(translateToJFree(flarsMeasureE, "",""));
 
         curve.setTitle(curveTitle + "[DRAS-length]");
        // p.add(translateToJFree(curve, "Time, second", "Value", lengthRectificationDrasAnomalies));
@@ -131,7 +143,7 @@ public class GraphingData {
 //        p.add(translateToJFree(equalStepL25Rectifier, "Time, second", "Value of rectification"));
      //   p.add(translateToJFree(flarsAnomalyDetector.createMeasuresCurve(curve), "",""));
         curve.setTitle(curveTitle + "[FLARS-energy]");
-       p.add(translateToJFree(curve, "Time, second", "Value", energyRectificationFlarsAnomalies));
+      // p.add(translateToJFree(curve, "Time, second", "Value", energyRectificationFlarsAnomalies));
 
         JScrollPane ff = new JScrollPane(p);
         f.add(ff);
