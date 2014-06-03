@@ -18,30 +18,29 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Collections;
 import java.util.List;
 
 public class GraphingData {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         rectificationsExamples();
     }
 
-    private static void rectificationsExamples() {
+    private static void rectificationsExamples() throws IOException {
         TimeSeriesGenerator seriesGenerator = new TimeSeriesGenerator(4);
 
-        Curve curve = seriesGenerator.generateGoodExampleEqualStepSeries(
-                "Incoming Data",
-                1000, // count
-                100, // step
-                555,  // color
-                4,// noise level
-                30, // extremal noise level
-                20 // number of points when fall
-        );
+        Reader reader = new FileReader("C:\\Users\\amikryukov\\Documents\\plot.csv");
+
+        CvsReader simpleCsvPlotReader = new CvsReader(reader, ",");
+
+        List<Curve> curves = simpleCsvPlotReader.parsePlotInCsv();
+
+        Curve curve = curves.get(0);
+
+
 
 
         // energy examples
@@ -63,6 +62,10 @@ public class GraphingData {
         eqsGlobalRectifier.setLocalOverviewCount(5);
         Curve equalStepL5Rectifier = eqsGlobalRectifier.rectify(curve);
 
+        EpsilonGlobalRectifier globalEpsilonRectifier = new EpsilonGlobalRectifier();
+        globalEpsilonRectifier.setEpsilon(15);
+        globalEpsilonRectifier.setLocalRectifier(new FragmentLengthRectifier());
+        Curve rectification = globalEpsilonRectifier.rectify(curve);
 
 
 //        eqsGlobalRectifier.setLocalOverviewCount(15);
@@ -74,7 +77,7 @@ public class GraphingData {
         // detect anomaly with DRAS global overview = 100 local overview = 5
         DrasAnomalyDetector drasAnomalyDetector = new DrasAnomalyDetector();
         drasAnomalyDetector.setHorizontalBackgroundLevel(1);
-        drasAnomalyDetector.setGlobalOverview(30);
+        drasAnomalyDetector.setGlobalOverview(15);
 
 
         FlarsAnomalyDetector flarsAnomalyDetector = new FlarsAnomalyDetector();
@@ -87,8 +90,8 @@ public class GraphingData {
 
         FlarsRTAnomalyDetector FRT = new FlarsRTAnomalyDetector();
         FRT.setVerticalExtremalLevel(0.5);
-        FRT.setGlobalOverviewInterval(30000);
-        for (Point p : equalStepL5Rectifier.getPoints()) {
+        FRT.setGlobalOverviewInterval(300);
+        for (Point p : rectification.getPoints()) {
             FRT.checkPoint(p);
         }
 
